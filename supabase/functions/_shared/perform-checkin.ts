@@ -1,0 +1,325 @@
+import { decryptCredentials, deserializeEncryptedBlob } from "./crypto.ts";
+import { executeCheckin } from "./adapters/index.ts";
+import type { CustomHttpConfig } from "./custom-http/types.ts";
+
+export async function performCheckin(
+	supabase: any,
+	targetId: string,
+	userId: string,
+	triggerType: "manual" | "scheduled" | "retry" | "test",
+	attempt: number = 1,
+	existingRunId?: string,
+	scheduleId?: string,
+	scheduledFor?: string,
+	updateSchedule: boolean = false,
+	retryIntervalMinutes?: number,
+	customHttpConfig?: CustomHttpConfig
+) {
+	const startedAt = new Date().toISOString();
+	let runId = existingRunId;
+
+	if (!runId) {
+		const { data: newRun, error: runInsertErr } = await supabase
+			.from("checkin_runs")
+			.insert({
+				user_id: userId,
+				target_id: targetId,
+				schedule_id: scheduleId || null,
+				trigger_type: triggerType,
+				scheduled_for: scheduledFor || null,
+				started_at: startedAt,
+				status: "running",
+				attempt: attempt,
+			})
+			.select("id")
+			.single();
+
+		if (runInsertErr || !newRun) {
+			console.error("Insert run error:", runInsertErr);
+			return { success: false, message: "创建执行记录失败" };
+		}
+		runId = newRun.id;
+	} else {
+		await supabase
+			.from("checkin_runs")
+			.update({
+				status: "running",
+				started_at: startedAt,
+				attempt: attempt,
+			})
+			.eq("id", runId)
+			.eq("user_id", userId);
+	}
+
+	const { data: target, error: targetErr } = await supabase
+		.from("checkin_targets")
+		.select("id, user_id, service_key, display_name, public_config, credential_secret_id, requires_reauth")
+		.eq("id", targetId)
+		.eq("user_id", userId)
+		.single();
+
+	if (targetErr || !target) {
+		await supabase.from("checkin_runs").update({
+			status: "failed",
+			finished_at: new Date().toISOString(),
+			error_code: "TARGET_NOT_FOUND",
+			error_message: "签到项目不存在",
+		}).eq("id", runId);
+		return { success: false, message: "签到项目不存在", runId };
+	}
+
+	if (target.requires_reauth) {
+		await supabase.from("checkin_runs").update({
+			status: "failed",
+			finished_at: new Date().toISOString(),
+			error_code: "REAUTH_REQUIRED",
+			error_message: "需要重新授权",
+		}).eq("id", runId);
+		return { success: false, message: "该项目需要重新授权", runId, requiresReauth: true };
+	}
+
+	let credentials: Record<string, unknown> = {};
+	if (target.credential_secret_id) {
+		const { data: secretRow, error: secretErr } = await supabase
+			.from("checkin_secrets")
+			.select("encrypted_data")
+			.eq("id", target.credential_secret_id)
+			.eq("user_id", userId)
+			.single();
+
+		if (secretErr || !secretRow) {
+			await supabase.from("checkin_runs").update({
+				status: "failed",
+				finished_at: new Date().toISOString(),
+				error_code: "CREDENTIAL_NOT_FOUND",
+				error_message: "凭据不存在，请重新配置",
+			}).eq("id", runId);
+			await supabase.from("checkin_targets").update({ requires_reauth: true }).eq("id", targetId);
+			return { success: false, message: "凭据不存在", runId, requiresReauth: true };
+		}
+
+		try {
+			let encryptedBytes: Uint8Array;
+			const raw = secretRow.encrypted_data;
+			if (typeof raw === "string") {
+				const hex = raw.startsWith("\\x") ? raw.substring(2) : raw;
+				const bytes = new Uint8Array(hex.length / 2);
+				for (let i = 0; i < hex.length; i += 2) {
+					bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+				}
+				encryptedBytes = bytes;
+			} else {
+				encryptedBytes = new Uint8Array(raw);
+			}
+			const blob = deserializeEncryptedBlob(encryptedBytes);
+			const plaintext = await decryptCredentials(blob);
+			credentials = JSON.parse(plaintext);
+		} catch (decryptErr) {
+			console.error("Decrypt error:", decryptErr);
+			await supabase.from("checkin_runs").update({
+				status: "failed",
+				finished_at: new Date().toISOString(),
+				error_code: "DECRYPT_FAILED",
+				error_message: "凭据解密失败",
+			}).eq("id", runId);
+			return { success: false, message: "凭据解密失败", runId };
+		}
+	}
+
+	let resolvedCustomHttpConfig = customHttpConfig;
+	if (target.service_key === "custom-http" && !resolvedCustomHttpConfig) {
+		const { data: customConfigRow, error: customConfigErr } = await supabase
+			.from("checkin_custom_http_configs")
+			.select("url, method, body_type, query_params, headers, body_fields, success_rules, already_checked_in_rules, auth_failure_rules, failure_rules, pre_request, extract_rules, browser_emulation, nonce_invalid_keywords, retry_config")
+			.eq("target_id", targetId)
+			.eq("user_id", userId)
+			.maybeSingle();
+
+		if (!customConfigErr && customConfigRow) {
+			const preReq = customConfigRow.pre_request as Record<string, unknown> | null;
+			const browserEmu = customConfigRow.browser_emulation as Record<string, unknown> | null;
+			resolvedCustomHttpConfig = {
+				url: customConfigRow.url,
+				method: customConfigRow.method,
+				bodyType: customConfigRow.body_type,
+				queryParams: customConfigRow.query_params || [],
+				headers: customConfigRow.headers || [],
+				bodyFields: customConfigRow.body_fields || [],
+				successRules: customConfigRow.success_rules || [],
+				alreadyCheckedInRules: customConfigRow.already_checked_in_rules || [],
+				authFailureRules: customConfigRow.auth_failure_rules || [],
+				failureRules: customConfigRow.failure_rules || [],
+				preRequest: preReq ? {
+					enabled: !!preReq.enabled,
+					url: (preReq.url as string) || "",
+					method: (preReq.method as string) || "GET",
+					includeCookies: preReq.includeCookies !== false,
+					extraHeaders: (preReq.extraHeaders as unknown[]) || (preReq.extra_headers as unknown[]) || [],
+				} : undefined,
+				extractRules: customConfigRow.extract_rules || [],
+				browserEmulation: browserEmu ? {
+					enabled: !!browserEmu.enabled,
+					userAgent: (browserEmu.userAgent as string) || "",
+					referer: (browserEmu.referer as string) || "",
+					origin: (browserEmu.origin as string) || "",
+					acceptLanguage: (browserEmu.acceptLanguage as string) || "zh-CN,zh;q=0.9,en;q=0.8",
+					xRequestedWith: browserEmu.xRequestedWith !== false,
+					accept: (browserEmu.accept as string) || undefined,
+					cacheControl: (browserEmu.cacheControl as string) || undefined,
+					pragma: (browserEmu.pragma as string) || undefined,
+					secChUa: (browserEmu.secChUa as string) || "",
+					secChUaMobile: (browserEmu.secChUaMobile as string) || "?0",
+					secChUaPlatform: (browserEmu.secChUaPlatform as string) || '"Windows"',
+					secFetchDest: (browserEmu.secFetchDest as string) || "empty",
+					secFetchMode: (browserEmu.secFetchMode as string) || "cors",
+					secFetchSite: (browserEmu.secFetchSite as string) || "same-origin",
+					secFetchUser: (browserEmu.secFetchUser as string) || "?1",
+					upgradeInsecureRequests: (browserEmu.upgradeInsecureRequests as string) || "1",
+				} : undefined,
+				nonceInvalidKeywords: customConfigRow.nonce_invalid_keywords || ["nonce invalid", "非法请求"],
+				retryConfig: customConfigRow.retry_config || undefined,
+			};
+		}
+	}
+
+	const startTime = Date.now();
+	const result = await executeCheckin(target.service_key, {
+		credentials,
+		publicConfig: target.public_config || {},
+		targetId: target.id,
+		userId: target.user_id,
+		attempt: attempt,
+		scheduledFor: scheduledFor,
+		customHttpConfig: resolvedCustomHttpConfig as Record<string, unknown> | undefined,
+	});
+	const durationMs = Date.now() - startTime;
+	const finishedAt = new Date().toISOString();
+
+	if (result.success) {
+		await supabase.from("checkin_runs").update({
+			status: result.alreadyCheckedIn ? "skipped" : "success",
+			finished_at: finishedAt,
+			duration_ms: durationMs,
+			result_summary: result.summary,
+			response_excerpt: result.sanitizedResponse ? result.sanitizedResponse.substring(0, 500) : null,
+		}).eq("id", runId);
+
+		if (triggerType === "test") {
+			return { success: true, message: result.summary, runId };
+		}
+
+		const lastSuccessAt = finishedAt;
+		let consecutiveDays = 0;
+		const { data: prevTarget } = await supabase
+			.from("checkin_targets")
+			.select("last_success_at, consecutive_success_days")
+			.eq("id", targetId)
+			.single();
+
+		if (prevTarget && prevTarget.last_success_at) {
+			const lastDate = new Date(prevTarget.last_success_at);
+			const today = new Date(finishedAt);
+			const lastDay = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+			const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+			const diffDays = Math.round((todayDay.getTime() - lastDay.getTime()) / (1000 * 60 * 60 * 24));
+			if (diffDays === 0) {
+				consecutiveDays = prevTarget.consecutive_success_days || 0;
+			} else if (diffDays === 1) {
+				consecutiveDays = (prevTarget.consecutive_success_days || 0) + 1;
+			} else {
+				consecutiveDays = 1;
+			}
+		} else {
+			consecutiveDays = 1;
+		}
+
+		await supabase.from("checkin_targets").update({
+			last_status: "success",
+			last_run_at: finishedAt,
+			last_success_at: lastSuccessAt,
+			last_error_code: null,
+			last_error_message: null,
+			consecutive_success_days: consecutiveDays,
+			requires_reauth: false,
+		}).eq("id", targetId);
+
+		if (updateSchedule && scheduleId) {
+			try {
+				await supabase.rpc("pulse_complete_schedule", {
+					p_schedule_id: scheduleId,
+					p_status: "success",
+					p_retry_after_minutes: null
+				});
+			} catch (e) {
+				console.warn("Complete schedule error:", e);
+			}
+		}
+
+		return { success: true, message: result.summary, runId };
+	} else {
+		const isAuthError = result.requiresReauth ||
+			result.errorCode === "UNAUTHORIZED" ||
+			result.errorCode === "INVALID_CREDENTIALS" ||
+			result.errorCode === "LOGIN_REQUIRED" ||
+			(result.errorMessage && (
+				result.errorMessage.includes("cookie") ||
+				result.errorMessage.includes("token") && result.errorMessage.includes("expired") ||
+				result.errorMessage.includes("登录") ||
+				result.errorMessage.includes("授权失效")
+			));
+
+		await supabase.from("checkin_runs").update({
+			status: "failed",
+			finished_at: finishedAt,
+			duration_ms: durationMs,
+			result_summary: result.summary,
+			error_code: result.errorCode || "CHECKIN_FAILED",
+			error_message: (result.errorMessage || result.summary).substring(0, 500),
+			response_excerpt: result.sanitizedResponse ? result.sanitizedResponse.substring(0, 500) : null,
+		}).eq("id", runId);
+
+		if (triggerType === "test") {
+			return {
+				success: false,
+				message: result.summary,
+				runId,
+				retryable: result.retryable,
+				requiresReauth: isAuthError,
+				errorCode: result.errorCode,
+			};
+		}
+
+		await supabase.from("checkin_targets").update({
+			last_status: "failed",
+			last_run_at: finishedAt,
+			last_error_code: result.errorCode || "CHECKIN_FAILED",
+			last_error_message: (result.errorMessage || result.summary).substring(0, 200),
+			requires_reauth: isAuthError,
+		}).eq("id", targetId);
+
+		if (updateSchedule && scheduleId) {
+			try {
+				let retryAfter: number | null = null;
+				if (result.retryable && !isAuthError && retryIntervalMinutes) {
+					retryAfter = retryIntervalMinutes;
+				}
+				await supabase.rpc("pulse_complete_schedule", {
+					p_schedule_id: scheduleId,
+					p_status: isAuthError ? "auth_failed" : "failed",
+					p_retry_after_minutes: retryAfter
+				});
+			} catch (e) {
+				console.warn("Complete schedule error:", e);
+			}
+		}
+
+		return {
+			success: false,
+			message: result.summary,
+			runId,
+			retryable: result.retryable,
+			requiresReauth: isAuthError,
+			errorCode: result.errorCode,
+		};
+	}
+}

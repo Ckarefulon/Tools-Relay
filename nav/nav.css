@@ -1,0 +1,583 @@
+/* ========== 站点顶栏 ========== */
+:root {
+	--site-nav-height: 44px;
+}
+
+.siteHeader {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 1000;
+	height: var(--site-nav-height);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 16px;
+	background: var(--surfaceSolid);
+	border-bottom: 1px solid var(--line);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.siteHeaderLeft {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.siteHeaderLogo {
+	width: 22px;
+	height: 22px;
+	flex-shrink: 0;
+}
+
+.siteHeaderName {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--ink);
+	white-space: nowrap;
+	letter-spacing: 0.01em;
+}
+
+.siteHeaderRight {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.siteHeaderBtn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 30px;
+	padding: 0 10px;
+	border: 1px solid var(--controlBorder);
+	border-radius: 6px;
+	background: var(--controlBg);
+	color: var(--controlText);
+	font-size: 12px;
+	font-weight: 500;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.siteHeaderBtn:hover {
+	background: var(--controlHoverBg);
+}
+
+.siteHeaderBtnTheme {
+	width: 30px;
+	padding: 0;
+	font-size: 15px;
+	line-height: 1;
+}
+
+/* 游客入口 */
+.guestEntry {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.guestTooltip {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	width: 240px;
+	padding: 14px;
+	background: var(--surfaceSolid);
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+	z-index: 1010;
+	font-size: 12px;
+	line-height: 1.6;
+	color: var(--muted);
+	display: none;
+}
+
+.guestTooltip.isVisible {
+	display: block;
+}
+
+.guestTooltipTitle {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ink);
+	margin-bottom: 6px;
+}
+
+.guestTooltipList {
+	margin: 0;
+	padding: 0 0 0 16px;
+	list-style: disc;
+}
+
+.guestTooltipList li {
+	margin-bottom: 2px;
+}
+
+.guestTooltip .siteHeaderBtn {
+	margin-top: 10px;
+	width: 100%;
+}
+
+/* 主体偏移，避免被固定顶栏遮挡 */
+body {
+	padding-top: var(--site-nav-height);
+}
+
+/* ========== 登录面板 ========== */
+.loginOverlay {
+	position: fixed;
+	inset: 0;
+	z-index: 2000;
+	background: rgba(0, 0, 0, 0.4);
+	display: none;
+	align-items: center;
+	justify-content: center;
+}
+
+.loginOverlay.isVisible {
+	display: flex;
+}
+
+.loginPanel {
+	width: 340px;
+	max-width: calc(100vw - 32px);
+	padding: 24px;
+	background: var(--surfaceSolid);
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+	font-size: 13px;
+	color: var(--ink);
+}
+
+.loginPanelTitle {
+	font-size: 16px;
+	font-weight: 600;
+	margin-bottom: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.loginPanelClose {
+	width: 28px;
+	height: 28px;
+	border: none;
+	background: none;
+	color: var(--muted);
+	font-size: 20px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 6px;
+	line-height: 1;
+}
+
+.loginPanelClose:hover {
+	background: var(--controlHoverBg);
+}
+
+.loginField {
+	margin-bottom: 12px;
+}
+
+.loginField label {
+	display: block;
+	font-size: 12px;
+	color: var(--muted);
+	margin-bottom: 4px;
+	font-weight: 500;
+}
+
+.loginField input {
+	width: 100%;
+	height: 36px;
+	padding: 0 10px;
+	border: 1px solid var(--controlBorder);
+	border-radius: 6px;
+	background: var(--controlBg);
+	color: var(--controlText);
+	font-size: 13px;
+	box-sizing: border-box;
+	outline: none;
+	transition: border-color 0.15s;
+}
+
+.loginField input:focus {
+	border-color: var(--accent);
+}
+
+.loginActions {
+	display: flex;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+.loginActions .siteHeaderBtn {
+	flex: 1;
+	height: 36px;
+	font-size: 13px;
+}
+
+.loginBtnPrimary {
+	background: var(--primaryBg) !important;
+	color: var(--primaryText) !important;
+	border-color: var(--primaryBorder) !important;
+}
+
+.loginBtnPrimary:hover {
+	background: var(--primaryHoverBg) !important;
+}
+
+.loginStatus {
+	margin-top: 10px;
+	font-size: 12px;
+	color: var(--muted);
+	min-height: 18px;
+	text-align: center;
+}
+
+.loginStatus.isError {
+	color: var(--red);
+}
+
+.loginStatus.isSuccess {
+	color: var(--good);
+}
+
+/* ========== 覆盖确认对话框 ========== */
+.confirmOverlay {
+	position: fixed;
+	inset: 0;
+	z-index: 2100;
+	background: rgba(0, 0, 0, 0.45);
+	display: none;
+	align-items: center;
+	justify-content: center;
+}
+
+.confirmOverlay.isVisible {
+	display: flex;
+}
+
+.confirmPanel {
+	width: 360px;
+	max-width: calc(100vw - 32px);
+	padding: 22px 24px 18px;
+	background: var(--surfaceSolid);
+	border: 1px solid var(--line);
+	border-top: 3px solid var(--red, #e85d6a);
+	border-radius: 12px;
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+	font-size: 13px;
+	color: var(--ink);
+}
+
+.confirmTitle {
+	font-size: 15px;
+	font-weight: 600;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--red, #e85d6a);
+}
+
+.confirmMessage {
+	font-size: 13px;
+	line-height: 1.6;
+	color: var(--muted);
+	margin-bottom: 16px;
+	word-break: break-word;
+	white-space: pre-wrap;
+}
+
+.confirmActions {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+}
+
+.confirmActions .siteHeaderBtn {
+	min-width: 80px;
+	height: 34px;
+}
+
+.confirmDangerBtn {
+	background: var(--red, #e85d6a) !important;
+	color: #fff !important;
+	border-color: var(--red, #e85d6a) !important;
+}
+
+.confirmDangerBtn:hover {
+	filter: brightness(0.92);
+}
+
+/* 头像 */
+.siteAvatar {
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border-radius: 50%;
+	overflow: hidden;
+	background: var(--accent);
+	color: #fff;
+	font-size: 13px;
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	border: none;
+	position: relative;
+	text-transform: uppercase;
+}
+
+.siteAvatarImage {
+	width: 100%;
+	height: 100%;
+	display: block;
+	object-fit: cover;
+}
+
+.siteAvatarImage[hidden],
+.siteAvatar #siteAvatarFallback[hidden] {
+	display: none;
+}
+
+/* 账号菜单 */
+.accountMenu {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	width: 220px;
+	padding: 12px;
+	background: var(--surfaceSolid);
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+	z-index: 1010;
+	font-size: 12px;
+	line-height: 1.6;
+	color: var(--muted);
+	display: none;
+}
+
+.accountMenu.isVisible {
+	display: block;
+}
+
+.accountMenuEmail {
+	font-weight: 600;
+	color: var(--ink);
+	margin-bottom: 4px;
+	word-break: break-all;
+}
+
+.accountMenuScope {
+	margin-bottom: 10px;
+	font-size: 11px;
+}
+
+.accountMenuProfileBtn {
+	width: 100%;
+	margin-bottom: 4px;
+}
+
+#siteSignOutBtn {
+	margin-bottom: 4px;
+}
+
+.accountMenu .siteHeaderBtn {
+	width: 100%;
+}
+
+.accountMenuCloud {
+	margin-top: 6px;
+	margin-bottom: 0;
+}
+
+.accountMenuDivider {
+	height: 1px;
+	background: var(--line);
+	margin: 8px 0;
+}
+
+.accountMenuCloudTitle {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--muted);
+	margin-bottom: 4px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.accountMenuCloudStatus {
+	font-size: 12px;
+	color: var(--muted);
+	margin-bottom: 8px;
+	min-height: 16px;
+}
+
+.accountMenuCloudStatus.isSuccess {
+	color: var(--good);
+}
+
+.accountMenuCloudStatus.isError {
+	color: var(--red);
+}
+
+.accountMenuCloudStatus.isWarning {
+	color: var(--orange, #e6b84a);
+}
+
+/* Warning 文案可点击：点击弹出确认对话框 */
+.accountMenuCloudStatus.isActionable {
+	cursor: pointer;
+	text-decoration: underline;
+	text-decoration-style: dotted;
+	text-underline-offset: 3px;
+}
+
+.accountMenuCloudStatus.isActionable:hover {
+	filter: brightness(1.15);
+}
+
+.accountMenuCloudActions {
+	display: flex;
+	flex-direction: row;
+	gap: 6px;
+	justify-content: center;
+}
+
+.cloudIconBtn {
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--controlBorder);
+	border-radius: 6px;
+	background: var(--controlBg);
+	color: var(--controlText);
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s;
+	flex-shrink: 0;
+}
+
+.cloudIconBtn:hover {
+	background: var(--controlHoverBg);
+}
+.cloudIconBtn:disabled {
+	opacity: 0.42;
+	cursor: not-allowed;
+	background: var(--controlBg);
+}
+
+/* 待办确认：对应原始按钮显示黄色 warning 标记 */
+.cloudIconBtn.isPendingConfirm {
+	border-color: var(--orange, #e6b84a);
+	color: var(--orange, #e6b84a);
+	background: color-mix(in srgb, var(--orange, #e6b84a) 12%, var(--controlBg));
+	animation: cloudBtnPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes cloudBtnPulse {
+	0%, 100% { box-shadow: 0 0 0 0 rgba(230, 184, 74, 0); }
+	50% { box-shadow: 0 0 0 4px rgba(230, 184, 74, 0.25); }
+}
+
+/* 捐赠按钮 */
+.donateEntry {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.siteDonateBtn {
+	gap: 4px;
+	color: var(--red, #e85d6a) !important;
+	border-color: var(--red, #e85d6a) !important;
+}
+
+.siteDonateBtn:hover {
+	background: var(--controlHoverBg);
+}
+
+.donateBtnLabel {
+	font-size: 12px;
+}
+
+@media (max-width: 540px) {
+	.donateBtnLabel {
+		display: none;
+	}
+}
+
+/* 捐赠下拉菜单 */
+.donateMenu {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	width: 220px;
+	padding: 18px 16px 14px;
+	background: var(--surfaceSolid);
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+	z-index: 1010;
+	text-align: center;
+	display: none;
+}
+
+.donateMenu.isVisible {
+	display: block;
+}
+
+.donateImageWrap {
+	position: relative;
+	width: 140px;
+	height: 140px;
+	margin: 0 auto 10px;
+	border-radius: 50%;
+	background: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.donateImage {
+	width: 100px;
+	height: 100px;
+	display: block;
+	pointer-events: none;
+}
+
+.donateImageOverlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+}
+
+.donateText {
+	font-size: 13px;
+	color: var(--ink);
+	font-weight: 500;
+	line-height: 1.5;
+	letter-spacing: 0.02em;
+}
