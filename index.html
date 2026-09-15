@@ -1,1 +1,200 @@
-<p>......<p>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<link rel="icon" href="/favicon.svg?v=7" type="image/svg+xml">
+
+	<!-- 主题先落地，避免深浅色闪一下（与其它页面共用 smartCubeTheme） -->
+	<script>
+		(function () {
+			var saved = null;
+			try { saved = localStorage.getItem("smartCubeTheme"); } catch (e) {}
+			var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+			document.documentElement.dataset.theme = saved || (prefersDark ? "dark" : "light");
+		})();
+	</script>
+
+	<!-- 设计令牌（dsk-*），必须先于页面样式 -->
+	<link rel="stylesheet" href="/ui/colors_and_type.css">
+	<link rel="stylesheet" href="/nav/nav.css?v=11">
+	<script src="/assets/services/core/site-scope.js?v=0915b" defer></script>
+	<script src="/nav/nav.js?v=11" defer></script>
+
+	<!-- @generated:dir-index : 本页由 make-index 自动生成，手动修改会在下次运行时被覆盖 -->
+	<meta name="generator" content="make-index (@generated:dir-index)">
+	<title>Ckarefulon &#8212; 目录</title>
+	<style>
+		:root {
+			--surfaceSolid: var(--dsk-card);
+			--line: var(--dsk-border);
+			--ink: var(--dsk-foreground);
+			--muted: var(--dsk-foreground-muted);
+		}
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			min-height: 100vh;
+			padding-top: var(--site-nav-height, 44px);
+			background-image: var(--dsk-page-bg);
+			background-attachment: fixed;
+			color: var(--ink);
+			font-family: var(--dsk-font-sans);
+			font-size: var(--dsk-text-base);
+			-webkit-font-smoothing: antialiased;
+		}
+		.dirPage { max-width: 1040px; margin: 0 auto; padding: 44px 24px 80px; }
+		.dirBack {
+			display: inline-flex; align-items: center; gap: 6px;
+			font-size: var(--dsk-text-sm); color: var(--muted);
+			text-decoration: none; transition: color .16s ease;
+		}
+		.dirBack:hover { color: var(--dsk-accent); }
+		.dirTitle {
+			margin: 14px 0 0;
+			font-size: var(--dsk-text-4xl);
+			font-weight: 650;
+			line-height: var(--dsk-leading-tight);
+			letter-spacing: -0.02em;
+		}
+		.dirTitle b {
+			font-weight: inherit;
+			background: linear-gradient(118deg, var(--dsk-purple-200), var(--dsk-accent));
+			-webkit-background-clip: text;
+			background-clip: text;
+			color: transparent;
+		}
+		.dirMeta { margin: 10px 0 0; font-size: var(--dsk-text-sm); color: var(--muted); }
+		.dirGrid {
+			list-style: none;
+			margin: 30px 0 0;
+			padding: 0;
+			display: grid;
+			gap: 14px;
+			grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+		}
+		.dirCard {
+			display: flex; align-items: center; gap: 14px;
+			padding: 16px 18px;
+			border-radius: var(--dsk-radius-lg);
+			background: linear-gradient(158deg, rgba(107, 93, 194, 0.16), rgba(22, 19, 40, 0.92) 58%);
+			border: 1px solid var(--dsk-card-border);
+			color: inherit; text-decoration: none;
+			box-shadow: var(--dsk-shadow-sm);
+			transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+		}
+		.dirCard:hover {
+			transform: translateY(-2px);
+			border-color: rgba(36, 240, 234, 0.34);
+			box-shadow: 0 10px 30px rgba(36, 240, 234, 0.10), var(--dsk-shadow-md);
+		}
+		.dirCard:focus-visible { outline: 2px solid var(--dsk-ring); outline-offset: 2px; }
+		.dirIcon { flex: none; display: flex; color: var(--dsk-purple-300); transition: color .18s ease; }
+		.dirCard:hover .dirIcon { color: var(--dsk-accent); }
+		.dirBody { flex: 1; min-width: 0; }
+		.dirName {
+			display: block;
+			font-size: var(--dsk-text-lg);
+			font-weight: 600;
+			letter-spacing: -0.01em;
+			overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+		}
+		.dirHint {
+			display: block;
+			margin-top: 3px;
+			font-size: var(--dsk-text-xs);
+			font-family: var(--dsk-font-mono);
+			color: var(--muted);
+		}
+		.dirGo {
+			flex: none;
+			font-size: var(--dsk-text-lg);
+			color: var(--dsk-foreground-subtle);
+			transition: transform .18s ease, color .18s ease;
+		}
+		.dirCard:hover .dirGo { color: var(--dsk-accent); transform: translateX(3px); }
+		.dirEmpty {
+			margin: 30px 0 0;
+			padding: 30px;
+			border-radius: var(--dsk-radius-lg);
+			border: 1px dashed var(--dsk-border);
+			background: rgba(42, 40, 64, 0.35);
+			color: var(--muted);
+			font-size: var(--dsk-text-sm);
+			text-align: center;
+		}
+		.dirFoot { margin: 36px 0 0; font-size: var(--dsk-text-xs); color: var(--dsk-foreground-subtle); }
+		:root[data-theme="light"] .dirCard {
+			background: linear-gradient(158deg, rgba(93, 78, 168, 0.08), rgba(255, 255, 255, 0.96) 58%);
+		}
+		:root[data-theme="light"] .dirEmpty { background: rgba(236, 238, 246, 0.6); }
+		@media (max-width: 520px) {
+			.dirPage { padding: 28px 16px 60px; }
+			.dirTitle { font-size: var(--dsk-text-3xl); }
+			.dirGrid { grid-template-columns: 1fr; }
+		}
+	</style>
+</head>
+<body>
+	<main class="dirPage">
+		<h1 class="dirTitle"><b>Ckarefulon</b></h1>
+		<p class="dirMeta">站点根目录 &#183; 共 3 个子文件夹</p>
+		<ul class="dirGrid">
+			<li>
+				<a class="dirCard" href="/Cube/">
+					<span class="dirIcon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2a2 2 0 0 1 1.6.8L11.5 7H18a3 3 0 0 1 3 3v6.5A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z"/></svg></span>
+					<span class="dirBody">
+						<span class="dirName">Cube</span>
+						<span class="dirHint">5 个子文件夹</span>
+					</span>
+					<span class="dirGo" aria-hidden="true">&#8594;</span>
+				</a>
+			</li>
+			<li>
+				<a class="dirCard" href="/Study/">
+					<span class="dirIcon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2a2 2 0 0 1 1.6.8L11.5 7H18a3 3 0 0 1 3 3v6.5A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z"/></svg></span>
+					<span class="dirBody">
+						<span class="dirName">Study</span>
+						<span class="dirHint">3 个子文件夹</span>
+					</span>
+					<span class="dirGo" aria-hidden="true">&#8594;</span>
+				</a>
+			</li>
+			<li>
+				<a class="dirCard" href="/Tools/">
+					<span class="dirIcon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2a2 2 0 0 1 1.6.8L11.5 7H18a3 3 0 0 1 3 3v6.5A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z"/></svg></span>
+					<span class="dirBody">
+						<span class="dirName">Tools</span>
+						<span class="dirHint">3 个子文件夹</span>
+					</span>
+					<span class="dirGo" aria-hidden="true">&#8594;</span>
+				</a>
+			</li>
+		</ul>
+		<p class="dirFoot">此页由 make-index 脚本自动生成</p>
+	</main>
+
+	<!-- nav.js 只注册 window.siteNav，顶栏要由页面自己 init；顺带把主题切换接上 -->
+	<script>
+		(function () {
+			function applyTheme(theme) {
+				theme = theme === "dark" ? "dark" : "light";
+				document.documentElement.dataset.theme = theme;
+				var btn = document.getElementById("siteThemeToggle");
+				if (btn) { btn.textContent = theme === "dark" ? "\u2600" : "\u263E"; }
+				try { localStorage.setItem("smartCubeTheme", theme); } catch (e) {}
+			}
+			function boot() {
+				if (window.siteNav && typeof window.siteNav.init === "function") {
+					window.siteNav.init({ setTheme: applyTheme });
+				}
+			}
+			if (document.readyState === "loading") {
+				document.addEventListener("DOMContentLoaded", boot);
+			} else {
+				boot();
+			}
+		})();
+	</script>
+</body>
+</html>
